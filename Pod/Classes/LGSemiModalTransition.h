@@ -8,7 +8,14 @@
 
 #import <UIKit/UIKit.h>
 
+@class LGSemiModalNavViewController;
+
 @interface LGSemiModalTransition : NSObject <UIViewControllerAnimatedTransitioning>
+
+/**
+ A reference to the modal view controller
+ */
+@property (nonatomic, weak) LGSemiModalNavViewController *viewController;
 
 /**
  A switch to determine if the modal is a presenter or a dismisser
@@ -49,5 +56,9 @@
  The background shade alpha of the view underneath the semi modal
  */
 @property (nonatomic, assign) CGFloat backgroundShadeAlpha;
+
+
+@property (nonatomic, assign) CGFloat leftMargin;
+@property (nonatomic, assign) CGFloat bottomMargin;
 
 @end

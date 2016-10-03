@@ -19,6 +19,7 @@
 - (void)loadView{
     [super loadView];
     
+    self.navigationBarHidden = YES;
     self.extendedLayoutIncludesOpaqueBars = NO;
     self.view.clipsToBounds = YES;
     self.transitioningDelegate = self;
@@ -36,10 +37,32 @@
     _backgroundShadeAlpha = 0.4;
 }
 
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    
+    [self.dismissalDelegate semiModalWillDismiss];
+}
+
 #pragma mark - Actions
 
 - (void)dismissWasTapped{
     [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+#pragma mark - Handle rotation
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        self.view.frame = self.newFrameBlock(size, self.view.frame);
+        
+        CGRect backgroundFrame = CGRectMake(0, 0, size.width, size.height);
+        backgroundFrame.size.height -= self.bottomMargin;
+        self.backgroundView.frame = backgroundFrame;
+        
+        self.recognizerView.frame = CGRectMake(0, 0, size.width, size.height);
+    } completion:nil];
+    
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
 }
 
 #pragma mark - UIViewControllerTransitioningDelegate Methods
@@ -56,6 +79,7 @@
 
 -(LGSemiModalTransition*)transitionPresenting:(BOOL)presenting{
     LGSemiModalTransition *animator = [LGSemiModalTransition new];
+    animator.viewController = self;
     animator.presenting = presenting;
     animator.tapDismissEnabled = _tapDismissEnabled;
     animator.animationSpeed = _animationSpeed;
@@ -64,6 +88,8 @@
     animator.springDamping = _springDamping;
     animator.springVelocity = _springVelocity;
     animator.backgroundShadeAlpha = _backgroundShadeAlpha;
+    animator.leftMargin = _leftMargin;
+    animator.bottomMargin = _bottomMargin;
     return animator;
 }
 

@@ -24,33 +24,44 @@
     UIViewController* fromViewController = [transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
     UIViewController* toViewController = (UIViewController*)[transitionContext viewControllerForKey:UITransitionContextToViewControllerKey];
     
-    CGRect modalViewFinalFrame = CGRectMake(0, transitionContext.containerView.frame.size.height - toViewController.view.frame.size.height, toViewController.view.frame.size.width, toViewController.view.frame.size.height);
+    CGRect modalViewFinalFrame = CGRectMake(
+        self.leftMargin,
+        transitionContext.containerView.frame.size.height - toViewController.view.frame.size.height - self.bottomMargin,
+        toViewController.view.frame.size.width,
+        toViewController.view.frame.size.height);
     CGRect modalViewInitialFrame = modalViewFinalFrame;
-    modalViewInitialFrame.origin.y = transitionContext.containerView.frame.size.height;
+    modalViewInitialFrame.origin.y = transitionContext.containerView.frame.size.height - self.bottomMargin;
+    modalViewInitialFrame.size.height = 0;
     
-    UIView* backgroundView = [[[[transitionContext containerView] subviews] filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"tag = 99"]] lastObject];
-    if(!backgroundView){
-        backgroundView = [[UIView alloc] initWithFrame:transitionContext.containerView.bounds];
+    UIView *backgroundView = [[[[transitionContext containerView] subviews] filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"tag = 99"]] lastObject];
+    if (!backgroundView){
+        CGRect frame = transitionContext.containerView.bounds;
+        frame.size.height -= self.bottomMargin;
+        backgroundView = [[UIView alloc] initWithFrame:frame];
         backgroundView.alpha = 0;
         backgroundView.tag = 99;
         backgroundView.backgroundColor = _backgroundShadeColor;
+    }
+    self.viewController.backgroundView = backgroundView;
+
+    UIView *recognizerView = [[[transitionContext containerView] subviews] filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"tag = 233"]].lastObject;
+    if (!recognizerView){
+        recognizerView = [[UIView alloc] initWithFrame:transitionContext.containerView.bounds];
+        recognizerView.tag = 233;
         
         if (self.tapDismissEnabled) {
-            UITapGestureRecognizer* tap = [[UITapGestureRecognizer alloc] initWithTarget:toViewController action:@selector(dismissWasTapped)];
-            [backgroundView addGestureRecognizer:tap];
-            backgroundView.userInteractionEnabled = YES;
+            UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:toViewController action:@selector(dismissWasTapped)];
+            [recognizerView addGestureRecognizer:tap];
         }
     }
+    self.viewController.recognizerView = recognizerView;
     
     fromViewController.view.userInteractionEnabled = NO;
     toViewController.view.userInteractionEnabled = NO;
     
     if (self.presenting) {
-        UIImage* image =  [self viewAsImage:fromViewController.view];
-        [transitionContext.containerView insertSubview:[[UIImageView alloc] initWithImage:image] atIndex:0];
-        fromViewController.view.hidden = YES;
-        
         [transitionContext.containerView insertSubview:backgroundView belowSubview:toViewController.view];
+        [transitionContext.containerView insertSubview:recognizerView aboveSubview:backgroundView];
         
         toViewController.view.frame = modalViewInitialFrame;
         [transitionContext.containerView addSubview:toViewController.view];
@@ -67,11 +78,7 @@
                              
                          }];
         
-        [UIView animateWithDuration:[self transitionDuration:transitionContext] + .2
-                              delay:0
-             usingSpringWithDamping:_springDamping
-              initialSpringVelocity:_springVelocity
-                            options:UIViewAnimationOptionCurveEaseInOut
+        [UIView animateWithDuration:[self transitionDuration:transitionContext]
                          animations:^{
                              toViewController.view.frame = modalViewFinalFrame;
                          }
@@ -95,15 +102,6 @@
                              [transitionContext completeTransition:YES];
                          }];
     }
-}
-
-- (UIImage*)viewAsImage:(UIView*)view {
-    UIImage *image = nil;
-    UIGraphicsBeginImageContextWithOptions(view.bounds.size, NO, [UIScreen mainScreen].scale);
-    [view.layer renderInContext:UIGraphicsGetCurrentContext()];
-    image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return image;
 }
 
 @end
